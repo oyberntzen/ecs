@@ -20,68 +20,63 @@ const (
 	decreaseThreshold = 3
 )
 
-type item struct {
-	entity Entity
-	data   interface{}
-}
-
 type pool struct {
-	items    []item
-	indicies map[Entity]uint32
+	components []ComponentInterface
+	indicies   map[uint32]uint32
 }
 
-func (p *pool) add(e Entity, i item) {
-	if index, ok := p.indicies[e]; ok {
-		p.items[index] = i
+func (p *pool) add(e *Entity, i ComponentInterface) {
+	if index, ok := p.indicies[e.id]; ok {
+		p.components[index] = i
 	}
 
-	length := len(p.items)
-	if cap(p.items)-length == 0 {
+	length := len(p.components)
+	if cap(p.components)-length == 0 {
 		if length == 0 {
-			p.items = []item{i}
-			p.indicies[e] = 0
+			p.components = []ComponentInterface{i}
+			p.indicies[e.id] = 0
 			return
 		}
-		newItems := make([]item, length+1, length*increaseFactor)
-		copy(newItems, p.items)
-		p.items = newItems
-		p.items[length] = i
-		p.indicies[e] = uint32(length)
+		newItems := make([]ComponentInterface, length+1, length*increaseFactor)
+		copy(newItems, p.components)
+		p.components = newItems
+		p.components[length] = i
+		p.indicies[e.id] = uint32(length)
 		return
 	}
-	p.items = p.items[:length+1]
-	p.items[length] = i
-	p.indicies[e] = uint32(length)
+	p.components = p.components[:length+1]
+	p.components[length] = i
+	p.indicies[e.id] = uint32(length)
 }
 
-func (p *pool) get(e Entity) (item, bool) {
-	index, ok := p.indicies[e]
+func (p *pool) get(e *Entity) ComponentInterface {
+	index, ok := p.indicies[e.id]
 	if !ok {
-		return item{}, false
+		return nil
 	}
-	return p.items[index], true
+	return p.components[index]
 }
 
-func (p *pool) remove(e Entity) bool {
-	index, ok := p.indicies[e]
+func (p *pool) remove(e *Entity) bool {
+	index, ok := p.indicies[e.id]
 	if !ok {
 		return false
 	}
-	delete(p.indicies, e)
+	delete(p.indicies, e.id)
 
-	length := len(p.items)
-	p.items[index] = p.items[length-1]
-	p.items = p.items[:length-1]
+	length := len(p.components)
+	p.components[index] = p.components[length-1]
+	p.components = p.components[:length-1]
 	length--
 
 	if uint32(length) > index {
-		p.indicies[p.items[index].entity] = index
+		p.indicies[p.components[index].Entity().id] = index
 	}
 
-	if length*decreaseThreshold < cap(p.items) {
-		newItems := make([]item, length, length*decreaseFactor)
-		copy(newItems, p.items)
-		p.items = newItems
+	if length*decreaseThreshold < cap(p.components) {
+		newItems := make([]ComponentInterface, length, length*decreaseFactor)
+		copy(newItems, p.components)
+		p.components = newItems
 	}
 
 	return true

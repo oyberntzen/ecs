@@ -34,21 +34,21 @@ func TestAddGetRemoveComponent(t *testing.T) {
 	e := scene.NewEntity()
 
 	type comp1 struct {
+		*ecs.Component
 		num int
 	}
 
-	_, ok := scene.GetComponent(e, comp1{})
-	assert.Equal(t, false, ok, "component should not exist")
+	c := e.GetComponent(comp1{})
+	assert.Equal(t, nil, c, "component should not exist")
 
-	c1 := comp1{45}
-	scene.AddComponent(e, c1)
-	c2, ok := scene.GetComponent(e, comp1{})
-	assert.Equal(t, true, ok, "component should exist")
+	c1 := comp1{num: 45}
+	e.AddComponent(c1)
+	c2 := e.GetComponent(comp1{})
 	assert.Equal(t, c1, c2, "components should be equal")
 
-	scene.RemoveComponent(e, comp1{})
-	_, ok = scene.GetComponent(e, comp1{})
-	assert.Equal(t, false, ok, "component should not exist")
+	e.RemoveComponent(comp1{})
+	c = e.GetComponent(comp1{})
+	assert.Equal(t, nil, c, "component should not exist")
 }
 
 func TestAddComponentMany(t *testing.T) {
@@ -56,18 +56,18 @@ func TestAddComponentMany(t *testing.T) {
 	scene := ecs.Scene{}
 
 	type comp1 struct {
+		*ecs.Component
 		num int
 	}
 
 	entities := make([]ecs.Entity, num)
 	for i := 0; i < num; i++ {
 		entities[i] = scene.NewEntity()
-		scene.AddComponent(entities[i], comp1{i})
+		entities[i].AddComponent(comp1{num: i})
 	}
 
 	for i := 0; i < num; i++ {
-		c, ok := scene.GetComponent(entities[i], comp1{})
-		assert.Equal(t, true, ok, "component should exist")
-		assert.Equal(t, c, comp1{i}, "components should be equal")
+		c := entities[i].GetComponent(comp1{})
+		assert.Equal(t, c, comp1{num: i}, "components should be equal")
 	}
 }
