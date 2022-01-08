@@ -30,7 +30,11 @@ type pool struct {
 	indicies map[Entity]uint32
 }
 
-func (p *pool) Add(e Entity, i item) {
+func (p *pool) add(e Entity, i item) {
+	if index, ok := p.indicies[e]; ok {
+		p.items[index] = i
+	}
+
 	length := len(p.items)
 	if cap(p.items)-length == 0 {
 		if length == 0 {
@@ -50,12 +54,20 @@ func (p *pool) Add(e Entity, i item) {
 	p.indicies[e] = uint32(length)
 }
 
-func (p *pool) Remove(entity Entity) bool {
-	index, ok := p.indicies[entity]
+func (p *pool) get(e Entity) (item, bool) {
+	index, ok := p.indicies[e]
+	if !ok {
+		return item{}, false
+	}
+	return p.items[index], true
+}
+
+func (p *pool) remove(e Entity) bool {
+	index, ok := p.indicies[e]
 	if !ok {
 		return false
 	}
-	delete(p.indicies, entity)
+	delete(p.indicies, e)
 
 	length := len(p.items)
 	p.items[index] = p.items[length-1]

@@ -38,20 +38,27 @@ func (scene *Scene) NewEntity() Entity {
 // RemoveEntity removes an entity from the scene.
 func (scene *Scene) RemoveEntity(e Entity) {
 	for _, pool := range scene.componentPools {
-		pool.Remove(e)
+		pool.remove(e)
 	}
 }
 
-// AddComponent adds a new component to entity e.
+// AddComponent adds a new component to entity e, and overwrites if component of this type is already added.
 func (scene *Scene) AddComponent(e Entity, c interface{}) {
 	id := scene.getComponentID(c)
-	scene.componentPools[id].Add(e, item{entity: e, data: c})
+	scene.componentPools[id].add(e, item{entity: e, data: c})
 }
 
-// RemoveComponent removes the component of type of c from the entity, returns false if the component did not exist
+// GetComponent returns the component of type c of entity e, returns false if component did not exist.
+func (scene *Scene) GetComponent(e Entity, c interface{}) (interface{}, bool) {
+	id := scene.getComponentID(c)
+	comp, ok := scene.componentPools[id].get(e)
+	return comp.data, ok
+}
+
+// RemoveComponent removes the component of type of c from the entity, returns false if the component did not exist.
 func (scene *Scene) RemoveComponent(e Entity, c interface{}) bool {
 	id := scene.getComponentID(c)
-	return scene.componentPools[id].Remove(e)
+	return scene.componentPools[id].remove(e)
 }
 
 func (scene *Scene) getComponentID(component interface{}) uint32 {
