@@ -14,19 +14,31 @@
 
 package ecs
 
-type Component struct {
-	entity Entity
+type System struct {
+	scene *Scene
 }
 
-func (component *Component) Entity() Entity {
-	return component.entity
+func (system *System) AllComponents(component ComponentInterface) []ComponentInterface {
+	return system.scene.allComponents(component)
 }
 
-func (component *Component) setEntity(entity Entity) {
-	component.entity = entity
+func (system *System) setScene(scene *Scene) {
+	system.scene = scene
 }
 
-type ComponentInterface interface {
-	Entity() Entity
-	setEntity(Entity)
+type SystemInterface interface {
+	Update(dt float64)
+
+	AllComponents(ComponentInterface) // implemented by System
+	setScene(*Scene)                  // implemented by System
+}
+
+type InitListener interface {
+	SystemInterface
+	Init()
+}
+
+type DeleteListener interface {
+	SystemInterface
+	Delete()
 }

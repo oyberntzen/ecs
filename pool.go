@@ -25,44 +25,44 @@ type pool struct {
 	indicies   map[uint32]uint32
 }
 
-func (p *pool) add(e *Entity, i ComponentInterface) {
-	if index, ok := p.indicies[e.id]; ok {
-		p.components[index] = i
+func (p *pool) add(entity *Entity, component ComponentInterface) {
+	if index, ok := p.indicies[entity.id]; ok {
+		p.components[index] = component
 	}
 
 	length := len(p.components)
 	if cap(p.components)-length == 0 {
 		if length == 0 {
-			p.components = []ComponentInterface{i}
-			p.indicies[e.id] = 0
+			p.components = []ComponentInterface{component}
+			p.indicies[entity.id] = 0
 			return
 		}
 		newItems := make([]ComponentInterface, length+1, length*increaseFactor)
 		copy(newItems, p.components)
 		p.components = newItems
-		p.components[length] = i
-		p.indicies[e.id] = uint32(length)
+		p.components[length] = component
+		p.indicies[entity.id] = uint32(length)
 		return
 	}
 	p.components = p.components[:length+1]
-	p.components[length] = i
-	p.indicies[e.id] = uint32(length)
+	p.components[length] = component
+	p.indicies[entity.id] = uint32(length)
 }
 
-func (p *pool) get(e *Entity) ComponentInterface {
-	index, ok := p.indicies[e.id]
+func (p *pool) get(entity *Entity) ComponentInterface {
+	index, ok := p.indicies[entity.id]
 	if !ok {
 		return nil
 	}
 	return p.components[index]
 }
 
-func (p *pool) remove(e *Entity) bool {
-	index, ok := p.indicies[e.id]
+func (p *pool) remove(entity *Entity) bool {
+	index, ok := p.indicies[entity.id]
 	if !ok {
 		return false
 	}
-	delete(p.indicies, e.id)
+	delete(p.indicies, entity.id)
 
 	length := len(p.components)
 	p.components[index] = p.components[length-1]

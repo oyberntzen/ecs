@@ -18,18 +18,15 @@ import (
 	"reflect"
 )
 
-// Entity is an enitity created by a scene. An entity should only be created from Scene.NewEntity.
-type Entity struct {
-	id    uint32
-	scene *Scene
-}
-
-// Scene contains all entities an their components.
+// Scene contains all entities, components and systems.
 type Scene struct {
+	entityCounter uint32
+
 	componentPools     []pool
 	componentIDs       map[reflect.Type]uint32
 	currentComponentID uint32
-	entityCounter      uint32
+
+	systems []SystemInterface
 }
 
 // NewEntity creates a new entity, and returns it.
@@ -38,29 +35,56 @@ func (scene *Scene) NewEntity() Entity {
 	return Entity{scene.entityCounter - 1, scene}
 }
 
-func (scene *Scene) removeEntity(e *Entity) {
-	for _, pool := range scene.componentPools {
-		pool.remove(e)
+func (scene *Scene) AddSystem(system SystemInterface) {
+	system.setScene(scene)
+	scene.systems = append(scene.systems, system)
+}
+
+func (scene *Scene) Init() {
+	for _, system := range scene.systems {
+		if initSystem, ok := system.(InitListener); ok {
+			initSystem.Init()
+		}
 	}
 }
 
-func (scene *Scene) addComponent(e *Entity, c ComponentInterface) {
-	id := scene.getComponentID(c)
-	scene.componentPools[id].add(e, c)
+func (scene *Scene) Update(dt float64) {
+	for _, system := range scene.systems {
+		system.Update(dt)
+	}
 }
 
-func (scene *Scene) getComponent(e *Entity, c ComponentInterface) ComponentInterface {
-	id := scene.getComponentID(c)
-	return scene.componentPools[id].get(e)
+func (scene *Scene) Delete() {
+	for _, system := range scene.systems {
+		if deleteSystem, ok := system.(DeleteListener); ok {
+			deleteSystem.Delete()
+		}
+	}
 }
 
-func (scene *Scene) removeComponent(e *Entity, c ComponentInterface) bool {
-	id := scene.getComponentID(c)
-	return scene.componentPools[id].remove(e)
+func (scene *Scene) removeEntity(entity *Entity) {
+	for _, pool := range scene.componentPools {
+		pool.remove(entity)
+	}
 }
 
-func (scene *Scene) AllComponents(c ComponentInterface) []ComponentInterface {
-	id := scene.getComponentID(c)
+func (scene *Scene) addComponent(entity *Entity, component ComponentInterface) {
+	id := scene.getComponentID(component)
+	scene.componentPools[id].add(entity, component)
+}
+
+func (scene *Scene) getComponent(entity *Entity, component ComponentInterface) ComponentInterface {
+	id := scene.getComponentID(component)
+	return scene.componentPools[id].get(entity)
+}
+
+func (scene *Scene) removeComponent(entity *Entity, component ComponentInterface) bool {
+	id := scene.getComponentID(component)
+	return scene.componentPools[id].remove(entity)
+}
+
+func (scene *Scene) allComponents(component ComponentInterface) []ComponentInterface {
+	id := scene.getComponentID(component)
 	return scene.componentPools[id].components
 }
 
@@ -77,24 +101,4 @@ func (scene *Scene) getComponentID(component ComponentInterface) uint32 {
 		scene.currentComponentID++
 	}
 	return id
-}
-
-// AddComponent adds a new component to the entity, and overwrites if component of this type is already added.
-func (entity *Entity) AddComponent(component ComponentInterface) {
-	entity.scene.addComponent(entity, component)
-}
-
-// GetComponent returns the component of type c of entity e, returns false if component did not exist.
-func (entity *Entity) GetComponent(component ComponentInterface) ComponentInterface {
-	return entity.scene.getComponent(entity, component)
-}
-
-// RemoveComponent removes the component of type of c from the entity, returns false if the component did not exist.
-func (entity *Entity) RemoveComponent(component ComponentInterface) bool {
-	return entity.scene.removeComponent(entity, component)
-}
-
-// RemoveEntity the entity from the scene.
-func (entity *Entity) Remove() {
-	entity.scene.removeEntity(entity)
 }
