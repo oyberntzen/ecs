@@ -32,7 +32,7 @@ type Scene struct {
 // NewEntity creates a new entity, and returns it.
 func (scene *Scene) NewEntity() Entity {
 	scene.entityCounter++
-	return Entity{scene.entityCounter - 1, scene}
+	return Entity{scene.entityCounter, scene}
 }
 
 func (scene *Scene) AddSystem(system SystemInterface) {
@@ -63,6 +63,8 @@ func (scene *Scene) Delete() {
 }
 
 func (scene *Scene) removeEntity(entity *Entity) {
+	entity.id = 0
+	entity.scene = nil
 	for _, pool := range scene.componentPools {
 		pool.remove(entity)
 	}
@@ -70,6 +72,7 @@ func (scene *Scene) removeEntity(entity *Entity) {
 
 func (scene *Scene) addComponent(entity *Entity, component ComponentInterface) {
 	id := scene.getComponentID(component)
+	component.setEntity(*entity)
 	scene.componentPools[id].add(entity, component)
 }
 
@@ -83,7 +86,7 @@ func (scene *Scene) removeComponent(entity *Entity, component ComponentInterface
 	return scene.componentPools[id].remove(entity)
 }
 
-func (scene *Scene) allComponents(component ComponentInterface) []ComponentInterface {
+func (scene *Scene) allComponents(component ComponentInterface) reflect.Value {
 	id := scene.getComponentID(component)
 	return scene.componentPools[id].components
 }
@@ -97,7 +100,7 @@ func (scene *Scene) getComponentID(component ComponentInterface) uint32 {
 	if !ok {
 		id = scene.currentComponentID
 		scene.componentIDs[componentType] = id
-		scene.componentPools = append(scene.componentPools, pool{nil, make(map[uint32]uint32)})
+		scene.componentPools = append(scene.componentPools, pool{reflect.MakeSlice(reflect.SliceOf(componentType), 0, 1), make(map[uint32]uint32)})
 		scene.currentComponentID++
 	}
 	return id

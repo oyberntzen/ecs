@@ -14,11 +14,13 @@
 
 package ecs
 
+import "reflect"
+
 type System struct {
 	scene *Scene
 }
 
-func (system *System) AllComponents(component ComponentInterface) []ComponentInterface {
+func (system *System) AllComponents(component ComponentInterface) reflect.Value {
 	return system.scene.allComponents(component)
 }
 
@@ -29,8 +31,8 @@ func (system *System) setScene(scene *Scene) {
 type SystemInterface interface {
 	Update(dt float64)
 
-	AllComponents(ComponentInterface) // implemented by System
-	setScene(*Scene)                  // implemented by System
+	AllComponents(ComponentInterface) reflect.Value // implemented by ecs.System
+	setScene(*Scene)                                // implemented by ecs.System
 }
 
 type InitListener interface {

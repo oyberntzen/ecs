@@ -12,25 +12,4 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package ecs
-
-type Component struct {
-	entity Entity
-}
-
-func NewComponent(entity Entity) Component {
-	return Component{entity: entity}
-}
-
-func (component *Component) Entity() Entity {
-	return component.entity
-}
-
-func (component *Component) setEntity(entity Entity) {
-	component.entity = entity
-}
-
-type ComponentInterface interface {
-	Entity() Entity
-	setEntity(Entity)
-}
+package ecs_test

@@ -14,38 +14,48 @@
 
 package ecs
 
+import (
+	"reflect"
+)
+
 const (
-	increaseFactor    = 2
+	increaseFactor    = 10
 	decreaseFactor    = 2
 	decreaseThreshold = 3
 )
 
 type pool struct {
-	components []ComponentInterface
+	components reflect.Value
 	indicies   map[uint32]uint32
 }
 
 func (p *pool) add(entity *Entity, component ComponentInterface) {
+	value := reflect.ValueOf(component)
 	if index, ok := p.indicies[entity.id]; ok {
-		p.components[index] = component
+		p.components.Index(int(index)).Set(value)
 	}
 
-	length := len(p.components)
-	if cap(p.components)-length == 0 {
+	length := p.components.Len()
+	if p.components.Cap()-length == 0 {
 		if length == 0 {
-			p.components = []ComponentInterface{component}
+			p.components = reflect.MakeSlice(p.components.Type(), 1, 1) //[]ComponentInterface{component}
+			p.components.Index(0).Set(value)
 			p.indicies[entity.id] = 0
 			return
 		}
-		newItems := make([]ComponentInterface, length+1, length*increaseFactor)
-		copy(newItems, p.components)
+		newItems := reflect.MakeSlice(p.components.Type(), length+1, length*increaseFactor) //make([]ComponentInterface, length+1, length*increaseFactor)
+		//copy(newItems, p.components)
+		reflect.Copy(newItems, p.components)
 		p.components = newItems
-		p.components[length] = component
+		//p.components[length] = component
+		p.components.Index(length).Set(value)
 		p.indicies[entity.id] = uint32(length)
 		return
 	}
-	p.components = p.components[:length+1]
-	p.components[length] = component
+	//p.components = p.components[:length+1]
+	p.components = p.components.Slice(0, length+1)
+	//p.components[length] = component
+	p.components.Index(length).Set(value)
 	p.indicies[entity.id] = uint32(length)
 }
 
@@ -54,7 +64,7 @@ func (p *pool) get(entity *Entity) ComponentInterface {
 	if !ok {
 		return nil
 	}
-	return p.components[index]
+	return p.components.Index(int(index)).Interface().(ComponentInterface) //p.components[index]
 }
 
 func (p *pool) remove(entity *Entity) bool {
@@ -64,18 +74,19 @@ func (p *pool) remove(entity *Entity) bool {
 	}
 	delete(p.indicies, entity.id)
 
-	length := len(p.components)
-	p.components[index] = p.components[length-1]
-	p.components = p.components[:length-1]
+	length := p.components.Len() //len(p.components)'
+	//p.components[index] = p.components[length-1]
+	p.components.Index(int(index)).Set(p.components.Index(length - 1))
+	p.components = p.components.Slice(0, length-1) //p.components[:length-1]
 	length--
 
 	if uint32(length) > index {
-		p.indicies[p.components[index].Entity().id] = index
+		p.indicies[p.components.Index(int(index)).Interface().(ComponentInterface).Entity().id] = index
 	}
 
-	if length*decreaseThreshold < cap(p.components) {
-		newItems := make([]ComponentInterface, length, length*decreaseFactor)
-		copy(newItems, p.components)
+	if length*decreaseThreshold < p.components.Cap() {
+		newItems := reflect.MakeSlice(p.components.Type(), length, length*decreaseFactor) //make([]ComponentInterface, length, length*decreaseFactor)
+		reflect.Copy(newItems, p.components)                                              //copy(newItems, p.components)
 		p.components = newItems
 	}
 
