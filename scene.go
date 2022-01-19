@@ -35,11 +35,13 @@ func (scene *Scene) NewEntity() Entity {
 	return Entity{scene.entityCounter, scene}
 }
 
+// AddSystem adds the system to the scene.
 func (scene *Scene) AddSystem(system SystemInterface) {
 	system.setScene(scene)
 	scene.systems = append(scene.systems, system)
 }
 
+// Init calls Init functions on all systems.
 func (scene *Scene) Init() {
 	for _, system := range scene.systems {
 		if initSystem, ok := system.(InitListener); ok {
@@ -48,12 +50,14 @@ func (scene *Scene) Init() {
 	}
 }
 
+// Update calls Update functions on all systems.
 func (scene *Scene) Update(dt float64) {
 	for _, system := range scene.systems {
 		system.Update(dt)
 	}
 }
 
+// Delete calls Delete functions on all systems.
 func (scene *Scene) Delete() {
 	for _, system := range scene.systems {
 		if deleteSystem, ok := system.(DeleteListener); ok {

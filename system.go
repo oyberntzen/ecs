@@ -16,10 +16,12 @@ package ecs
 
 import "reflect"
 
+// System is the base struct for systems, and should be embedded by all systems.
 type System struct {
 	scene *Scene
 }
 
+// AllComponents returns all the components of one type in the scene.
 func (system *System) AllComponents(component ComponentInterface) reflect.Value {
 	return system.scene.allComponents(component)
 }
@@ -28,6 +30,7 @@ func (system *System) setScene(scene *Scene) {
 	system.scene = scene
 }
 
+// SystemInterface is the interface that all systems have to implement.
 type SystemInterface interface {
 	Update(dt float64)
 
@@ -35,11 +38,13 @@ type SystemInterface interface {
 	setScene(*Scene)                                // implemented by ecs.System
 }
 
+// InitListener is the interface for systems that has an Init function.
 type InitListener interface {
 	SystemInterface
 	Init()
 }
 
+// DeleteListener is the interface for systems that has a Delete function.
 type DeleteListener interface {
 	SystemInterface
 	Delete()

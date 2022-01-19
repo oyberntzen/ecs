@@ -14,14 +14,12 @@
 
 package ecs
 
+// Component is the base struct for components, and should be embedded by all components.
 type Component struct {
 	entity Entity
 }
 
-func NewComponent(entity Entity) Component {
-	return Component{entity: entity}
-}
-
+// Entity returns the entity the component is added to.
 func (component *Component) Entity() Entity {
 	return component.entity
 }
@@ -30,7 +28,8 @@ func (component *Component) setEntity(entity Entity) {
 	component.entity = entity
 }
 
+// ComponentInterface is the interface that all components have to implement.
 type ComponentInterface interface {
-	Entity() Entity
-	setEntity(Entity)
+	Entity() Entity   // implemented by ecs.Component
+	setEntity(Entity) // implemented by ecs.Component
 }
