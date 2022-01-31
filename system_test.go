@@ -15,7 +15,6 @@
 package ecs_test
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/oyberntzen/ecs"
@@ -81,7 +80,7 @@ func TestSystemDelete(t *testing.T) {
 
 type system3 struct {
 	ecs.System
-	allComponents reflect.Value
+	allComponents []comp1
 }
 
 type comp1 struct {
@@ -90,7 +89,7 @@ type comp1 struct {
 }
 
 func (sys *system3) Update(dt float64) {
-	sys.allComponents = sys.AllComponents(&comp1{})
+	sys.allComponents = ecs.AllComponents[comp1](sys.Scene())
 }
 
 func TestSystemAllComponents(t *testing.T) {
@@ -101,13 +100,13 @@ func TestSystemAllComponents(t *testing.T) {
 	entities := make([]ecs.Entity, 100)
 	for i := 0; i < len(entities); i++ {
 		entities[i] = scene.NewEntity()
-		entities[i].AddComponent(&comp1{num: i})
+		ecs.AddComponent(&comp1{Component: ecs.NewComponent(entities[i]), num: i})
 	}
 
 	scene.Update(0)
 
 	for i := 0; i < len(entities); i++ {
-		comp := sys.allComponents.Index(i).Interface().(*comp1)
+		comp := sys.allComponents[i]
 		assert.Equal(t, i, comp.num, "Components should be equal")
 	}
 }
@@ -117,9 +116,9 @@ type system4 struct {
 }
 
 func (sys *system4) Update(dt float64) {
-	allComponents := sys.AllComponents(&comp1{})
-	for i := 0; i < allComponents.Len(); i++ {
-		allComponents.Index(i).Interface().(*comp1).num++
+	allComponents := ecs.AllComponents[comp1](sys.Scene())
+	for i := 0; i < len(allComponents); i++ {
+		allComponents[i].num++
 	}
 }
 
@@ -131,7 +130,7 @@ func BenchmarkSystemAllComponents(b *testing.B) {
 	entities := make([]ecs.Entity, 100)
 	for i := 0; i < len(entities); i++ {
 		entities[i] = scene.NewEntity()
-		entities[i].AddComponent(&comp1{num: i})
+		ecs.AddComponent(&comp1{Component: ecs.NewComponent(entities[i]), num: i})
 	}
 
 	b.ResetTimer()

@@ -15,6 +15,8 @@
 package ecs
 
 import (
+	"errors"
+	"fmt"
 	"reflect"
 )
 
@@ -22,7 +24,7 @@ import (
 type Scene struct {
 	entityCounter uint32
 
-	componentPools     []pool
+	componentPools     []poolInterface
 	componentIDs       map[reflect.Type]uint32
 	currentComponentID uint32
 
@@ -74,29 +76,64 @@ func (scene *Scene) removeEntity(entity *Entity) {
 	}
 }
 
-func (scene *Scene) addComponent(entity *Entity, component ComponentInterface) {
-	id := scene.getComponentID(component)
-	component.setEntity(*entity)
-	scene.componentPools[id].add(entity, component)
+func AllComponents[T ComponentInterface](scene *Scene) []T {
+	id := getComponentID[T](scene)
+	componentPool, ok := scene.componentPools[id].(*pool[T])
+	if !ok {
+		panic("Not working")
+	}
+	return componentPool.components
 }
 
-func (scene *Scene) getComponent(entity *Entity, component ComponentInterface) ComponentInterface {
-	id := scene.getComponentID(component)
-	return scene.componentPools[id].get(entity)
+// AddComponent adds a new component to the entity, and overwrites if component of this type is already added.
+func AddComponent[T ComponentInterface](component *T) error {
+	if (*component).Entity().scene == nil || (*component).Entity().id == 0 {
+		return errors.New("ecs: entity not registered to a scene (or has been deleted)")
+	}
+
+	id := getComponentID[T]((*component).Entity().scene)
+	componentPool, ok := (*component).Entity().scene.componentPools[id].(*pool[T])
+	if !ok {
+		panic("Not working")
+	}
+	componentPool.add((*component).Entity(), component)
+
+	return nil
 }
 
-func (scene *Scene) removeComponent(entity *Entity, component ComponentInterface) bool {
-	id := scene.getComponentID(component)
-	return scene.componentPools[id].remove(entity)
+// GetComponent returns the component of type c of entity e, returns false if component did not exist.
+func GetComponent[T ComponentInterface](entity *Entity) (*T, error) {
+	if entity.scene == nil || entity.id == 0 {
+		return nil, errors.New("ecs: entity not registered to a scene (or has been deleted)")
+	}
+
+	id := getComponentID[T](entity.scene)
+	componentPool, ok := entity.scene.componentPools[id].(*pool[T])
+	if !ok {
+		panic("Not working")
+	}
+
+	result := componentPool.get(entity)
+	if result == nil {
+		return nil, fmt.Errorf("ecs: no component of type %s added to entity", reflect.TypeOf(new(T)))
+	}
+	return result, nil
 }
 
-func (scene *Scene) allComponents(component ComponentInterface) reflect.Value {
-	id := scene.getComponentID(component)
-	return scene.componentPools[id].components
+// RemoveComponent removes the component of type of c from the entity, returns false if the component did not exist.
+func RemoveComponent[T ComponentInterface](entity *Entity) error {
+	if entity.scene == nil || entity.id == 0 {
+		return errors.New("ecs: entity not registered to a scene (or has been deleted)")
+	}
+	id := getComponentID[T](entity.scene)
+	if !entity.scene.componentPools[id].remove(entity) {
+		return fmt.Errorf("ecs: no component of type %s added to entity", reflect.TypeOf(new(T)))
+	}
+	return nil
 }
 
-func (scene *Scene) getComponentID(component ComponentInterface) uint32 {
-	componentType := reflect.TypeOf(component)
+func getComponentID[T ComponentInterface](scene *Scene) uint32 {
+	componentType := reflect.TypeOf(new(T))
 	if scene.componentIDs == nil {
 		scene.componentIDs = make(map[reflect.Type]uint32)
 	}
@@ -104,7 +141,7 @@ func (scene *Scene) getComponentID(component ComponentInterface) uint32 {
 	if !ok {
 		id = scene.currentComponentID
 		scene.componentIDs[componentType] = id
-		scene.componentPools = append(scene.componentPools, pool{reflect.MakeSlice(reflect.SliceOf(componentType), 0, 1), make(map[uint32]uint32)})
+		scene.componentPools = append(scene.componentPools, &pool[T]{make([]T, 0, 1), make(map[uint32]uint32)})
 		scene.currentComponentID++
 	}
 	return id

@@ -19,17 +19,16 @@ type Component struct {
 	entity Entity
 }
 
-// Entity returns the entity the component is added to.
-func (component *Component) Entity() Entity {
-	return component.entity
+func NewComponent(entity Entity) Component {
+	return Component{entity: entity}
 }
 
-func (component *Component) setEntity(entity Entity) {
-	component.entity = entity
+// Entity returns the entity the component is added to.
+func (component Component) Entity() *Entity {
+	return &component.entity
 }
 
 // ComponentInterface is the interface that all components have to implement.
 type ComponentInterface interface {
-	Entity() Entity   // implemented by ecs.Component
-	setEntity(Entity) // implemented by ecs.Component
+	Entity() *Entity // implemented by ecs.Component
 }

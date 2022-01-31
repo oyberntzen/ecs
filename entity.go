@@ -16,46 +16,12 @@ package ecs
 
 import (
 	"errors"
-	"fmt"
-	"reflect"
 )
 
 // Entity is an enitity created by a scene. An entity should only be created from Scene.NewEntity.
 type Entity struct {
 	id    uint32
 	scene *Scene
-}
-
-// AddComponent adds a new component to the entity, and overwrites if component of this type is already added.
-func (entity *Entity) AddComponent(component ComponentInterface) error {
-	if entity.scene == nil || entity.id == 0 {
-		return errors.New("ecs: entity not registered to a scene (or has been deleted)")
-	}
-	entity.scene.addComponent(entity, component)
-	return nil
-}
-
-// GetComponent returns the component of type c of entity e, returns false if component did not exist.
-func (entity *Entity) GetComponent(component ComponentInterface) (ComponentInterface, error) {
-	if entity.scene == nil || entity.id == 0 {
-		return nil, errors.New("ecs: entity not registered to a scene (or has been deleted)")
-	}
-	result := entity.scene.getComponent(entity, component)
-	if result == nil {
-		return nil, fmt.Errorf("ecs: no component of type %s added to entity", reflect.TypeOf(component))
-	}
-	return result, nil
-}
-
-// RemoveComponent removes the component of type of c from the entity, returns false if the component did not exist.
-func (entity *Entity) RemoveComponent(component ComponentInterface) error {
-	if entity.scene == nil || entity.id == 0 {
-		return errors.New("ecs: entity not registered to a scene (or has been deleted)")
-	}
-	if !entity.scene.removeComponent(entity, component) {
-		return fmt.Errorf("ecs: no component of type %s added to entity", reflect.TypeOf(component))
-	}
-	return nil
 }
 
 // Remove removes the entity from the scene.
