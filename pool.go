@@ -15,7 +15,7 @@
 package ecs
 
 const (
-	increaseFactor    = 10
+	increaseFactor    = 2
 	decreaseFactor    = 2
 	decreaseThreshold = 3
 )

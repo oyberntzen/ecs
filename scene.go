@@ -86,17 +86,17 @@ func AllComponents[T ComponentInterface](scene *Scene) []T {
 }
 
 // AddComponent adds a new component to the entity, and overwrites if component of this type is already added.
-func AddComponent[T ComponentInterface](component *T) error {
-	if (*component).Entity().scene == nil || (*component).Entity().id == 0 {
+func AddComponent[T ComponentInterface](component *T, entity *Entity) error {
+	if entity.scene == nil || entity.id == 0 {
 		return errors.New("ecs: entity not registered to a scene (or has been deleted)")
 	}
 
-	id := getComponentID[T]((*component).Entity().scene)
-	componentPool, ok := (*component).Entity().scene.componentPools[id].(*pool[T])
+	id := getComponentID[T](entity.scene)
+	componentPool, ok := entity.scene.componentPools[id].(*pool[T])
 	if !ok {
 		panic("Not working")
 	}
-	componentPool.add((*component).Entity(), component)
+	componentPool.add(entity, component)
 
 	return nil
 }
@@ -133,7 +133,7 @@ func RemoveComponent[T ComponentInterface](entity *Entity) error {
 }
 
 func getComponentID[T ComponentInterface](scene *Scene) uint32 {
-	componentType := reflect.TypeOf(new(T))
+	componentType := reflect.TypeOf((*T)(nil))
 	if scene.componentIDs == nil {
 		scene.componentIDs = make(map[reflect.Type]uint32)
 	}

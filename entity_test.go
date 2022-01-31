@@ -51,8 +51,8 @@ func TestEntityRemove(t *testing.T) {
 		num int
 	}
 
-	ecs.AddComponent(&comp1{Component: ecs.NewComponent(entity), num: 10})
-	ecs.AddComponent(&comp2{Component: ecs.NewComponent(entity), num: 21})
+	ecs.AddComponent(&comp1{Component: ecs.NewComponent(entity), num: 10}, &entity)
+	ecs.AddComponent(&comp2{Component: ecs.NewComponent(entity), num: 21}, &entity)
 
 	entity.Remove()
 
@@ -80,8 +80,8 @@ func TestEntityAddGetRemoveComponent(t *testing.T) {
 	expected1 := comp1{Component: ecs.NewComponent(entity), num: 10}
 	expected2 := comp2{Component: ecs.NewComponent(entity), num: 21}
 
-	err1 := ecs.AddComponent(&expected1)
-	err2 := ecs.AddComponent(&expected2)
+	err1 := ecs.AddComponent(&expected1, &entity)
+	err2 := ecs.AddComponent(&expected2, &entity)
 
 	assert.Nil(t, err1, "Error should be nil")
 	assert.Nil(t, err2, "Error should be nil")
@@ -119,7 +119,7 @@ func TestEntityAddGetRemoveComponentMany(t *testing.T) {
 
 	for n := 0; n < 5; n++ {
 		entities[n] = scene.NewEntity()
-		err := ecs.AddComponent(&comp{Component: ecs.NewComponent(entities[n]), num: n})
+		err := ecs.AddComponent(&comp{Component: ecs.NewComponent(entities[n]), num: n}, &entities[n])
 		assert.Nil(t, err, "Error should be nil")
 	}
 
@@ -170,8 +170,8 @@ func BenchmarkEntityRemove(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		for n := 0; n < 100; n++ {
-			ecs.AddComponent(&comp1{Component: ecs.NewComponent(entities[n]), num: 1})
-			ecs.AddComponent(&comp2{Component: ecs.NewComponent(entities[n]), num: 2})
+			ecs.AddComponent(&comp1{Component: ecs.NewComponent(entities[n]), num: 1}, &entities[n])
+			ecs.AddComponent(&comp2{Component: ecs.NewComponent(entities[n]), num: 2}, &entities[n])
 		}
 		b.StartTimer()
 		for n := 0; n < 100; n++ {
@@ -196,7 +196,7 @@ func BenchmarkEntityAddComponent(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		b.StartTimer()
 		for n := 0; n < 100; n++ {
-			ecs.AddComponent(&comp{Component: ecs.NewComponent(entities[n]), num: n})
+			ecs.AddComponent(&comp{Component: ecs.NewComponent(entities[n]), num: n}, &entities[n])
 		}
 		b.StopTimer()
 
@@ -220,7 +220,7 @@ func BenchmarkEntityRemoveComponent(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		for n := 0; n < 100; n++ {
-			ecs.AddComponent(&comp{Component: ecs.NewComponent(entities[n]), num: n})
+			ecs.AddComponent(&comp{Component: ecs.NewComponent(entities[n]), num: n}, &entities[n])
 		}
 
 		b.StartTimer()
@@ -242,7 +242,7 @@ func BenchmarkEntityGetComponent(b *testing.B) {
 
 	for n := 0; n < 100; n++ {
 		entities[n] = scene.NewEntity()
-		ecs.AddComponent(&comp{Component: ecs.NewComponent(entities[n]), num: n})
+		ecs.AddComponent(&comp{Component: ecs.NewComponent(entities[n]), num: n}, &entities[n])
 	}
 
 	for i := 0; i < b.N; i++ {

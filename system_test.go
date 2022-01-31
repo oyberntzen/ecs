@@ -100,7 +100,7 @@ func TestSystemAllComponents(t *testing.T) {
 	entities := make([]ecs.Entity, 100)
 	for i := 0; i < len(entities); i++ {
 		entities[i] = scene.NewEntity()
-		ecs.AddComponent(&comp1{Component: ecs.NewComponent(entities[i]), num: i})
+		ecs.AddComponent(&comp1{Component: ecs.NewComponent(entities[i]), num: i}, &entities[i])
 	}
 
 	scene.Update(0)
@@ -130,7 +130,7 @@ func BenchmarkSystemAllComponents(b *testing.B) {
 	entities := make([]ecs.Entity, 100)
 	for i := 0; i < len(entities); i++ {
 		entities[i] = scene.NewEntity()
-		ecs.AddComponent(&comp1{Component: ecs.NewComponent(entities[i]), num: i})
+		ecs.AddComponent(&comp1{Component: ecs.NewComponent(entities[i]), num: i}, &entities[i])
 	}
 
 	b.ResetTimer()
