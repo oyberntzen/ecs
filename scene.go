@@ -76,42 +76,38 @@ func (scene *Scene) removeEntity(entity *Entity) {
 	}
 }
 
+// AllComponents returns a slice of all components of type T.
 func AllComponents[T ComponentInterface](scene *Scene) []T {
 	id := getComponentID[T](scene)
-	componentPool, ok := scene.componentPools[id].(*pool[T])
-	if !ok {
-		panic("Not working")
-	}
+	componentPool := scene.componentPools[id].(*pool[T])
 	return componentPool.components
 }
 
-// AddComponent adds a new component to the entity, and overwrites if component of this type is already added.
-func AddComponent[T ComponentInterface](component *T, entity *Entity) error {
+// AddComponent adds a new component to the entity, and overwrites if component of this
+// type is already added. An error is returned if the entity is deleted.
+func AddComponent[T ComponentInterface](component *T) error {
+	entity := (*component).Entity()
 	if entity.scene == nil || entity.id == 0 {
 		return errors.New("ecs: entity not registered to a scene (or has been deleted)")
 	}
 
 	id := getComponentID[T](entity.scene)
-	componentPool, ok := entity.scene.componentPools[id].(*pool[T])
-	if !ok {
-		panic("Not working")
-	}
+	componentPool := entity.scene.componentPools[id].(*pool[T])
 	componentPool.add(entity, component)
 
 	return nil
 }
 
-// GetComponent returns the component of type c of entity e, returns false if component did not exist.
+// GetComponent returns a pointer to the component of type T from the entity.
+// An error is returned if the component does not exist or if the entity is
+// deleted.
 func GetComponent[T ComponentInterface](entity *Entity) (*T, error) {
 	if entity.scene == nil || entity.id == 0 {
 		return nil, errors.New("ecs: entity not registered to a scene (or has been deleted)")
 	}
 
 	id := getComponentID[T](entity.scene)
-	componentPool, ok := entity.scene.componentPools[id].(*pool[T])
-	if !ok {
-		panic("Not working")
-	}
+	componentPool := entity.scene.componentPools[id].(*pool[T])
 
 	result := componentPool.get(entity)
 	if result == nil {
@@ -120,7 +116,9 @@ func GetComponent[T ComponentInterface](entity *Entity) (*T, error) {
 	return result, nil
 }
 
-// RemoveComponent removes the component of type of c from the entity, returns false if the component did not exist.
+// RemoveComponent removes the component of type T from the entity.
+// An error is returned if the component does not exist or if the
+// entity is deleted.
 func RemoveComponent[T ComponentInterface](entity *Entity) error {
 	if entity.scene == nil || entity.id == 0 {
 		return errors.New("ecs: entity not registered to a scene (or has been deleted)")

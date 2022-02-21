@@ -19,6 +19,7 @@ type Component struct {
 	entity Entity
 }
 
+// NewComponent returns a new Component added to the entity.
 func NewComponent(entity Entity) Component {
 	return Component{entity: entity}
 }

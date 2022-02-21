@@ -24,7 +24,7 @@ type Entity struct {
 	scene *Scene
 }
 
-// Remove removes the entity from the scene.
+// Remove removes the entity and all its components from the scene.
 func (entity *Entity) Remove() error {
 	if entity.scene == nil || entity.id == 0 {
 		return errors.New("ecs: entity not registered to a scene (or has been deleted)")
