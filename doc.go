@@ -23,19 +23,17 @@
 //
 // Adding Components
 //
-// Components are structs that embed ecs.Component.
-// When an instance of the component is created,
-// ecs.Component has to be initialized with ecs.NewComponent.
+// Components are normal structs storing data.
 //  type info struct {
-//      ecs.Component
 //      num int
 //  }
-//  component := info{Component: ecs.NewComponent(entity), num: 12}
-// Then, the component can be added to the scene.
-//	ecs.AddComponent(component)
+//  component := info{num: 12}
+// Then, the component can be added to an entity.
+//	ecs.AddComponent(&entity, &component)
 // The component can also be retrieved and removed.
 //  component2, _ := ecs.GetComponent[info](&entiy) // Get single component from entity
 //  ecs.RemoveComponent[info](&entity)              // Remove component from entity
+// It is also possible to get all components of a type, which is very useful in systems.
 //  components := ecs.AllComponents[info](scene)    // Get all components of same type
 //
 // Adding Systems

@@ -77,7 +77,7 @@ func (scene *Scene) removeEntity(entity *Entity) {
 }
 
 // AllComponents returns a slice of all components of type T.
-func AllComponents[T ComponentInterface](scene *Scene) []T {
+func AllComponents[T any](scene *Scene) []Component[T] {
 	id := getComponentID[T](scene)
 	componentPool := scene.componentPools[id].(*pool[T])
 	return componentPool.components
@@ -85,8 +85,7 @@ func AllComponents[T ComponentInterface](scene *Scene) []T {
 
 // AddComponent adds a new component to the entity, and overwrites if component of this
 // type is already added. An error is returned if the entity is deleted.
-func AddComponent[T ComponentInterface](component *T) error {
-	entity := (*component).Entity()
+func AddComponent[T any](entity *Entity, component *T) error {
 	if entity.scene == nil || entity.id == 0 {
 		return errors.New("ecs: entity not registered to a scene (or has been deleted)")
 	}
@@ -101,7 +100,7 @@ func AddComponent[T ComponentInterface](component *T) error {
 // GetComponent returns a pointer to the component of type T from the entity.
 // An error is returned if the component does not exist or if the entity is
 // deleted.
-func GetComponent[T ComponentInterface](entity *Entity) (*T, error) {
+func GetComponent[T any](entity *Entity) (*T, error) {
 	if entity.scene == nil || entity.id == 0 {
 		return nil, errors.New("ecs: entity not registered to a scene (or has been deleted)")
 	}
@@ -119,7 +118,7 @@ func GetComponent[T ComponentInterface](entity *Entity) (*T, error) {
 // RemoveComponent removes the component of type T from the entity.
 // An error is returned if the component does not exist or if the
 // entity is deleted.
-func RemoveComponent[T ComponentInterface](entity *Entity) error {
+func RemoveComponent[T any](entity *Entity) error {
 	if entity.scene == nil || entity.id == 0 {
 		return errors.New("ecs: entity not registered to a scene (or has been deleted)")
 	}
@@ -130,7 +129,7 @@ func RemoveComponent[T ComponentInterface](entity *Entity) error {
 	return nil
 }
 
-func getComponentID[T ComponentInterface](scene *Scene) uint32 {
+func getComponentID[T any](scene *Scene) uint32 {
 	componentType := reflect.TypeOf((*T)(nil))
 	if scene.componentIDs == nil {
 		scene.componentIDs = make(map[reflect.Type]uint32)
@@ -139,7 +138,7 @@ func getComponentID[T ComponentInterface](scene *Scene) uint32 {
 	if !ok {
 		id = scene.currentComponentID
 		scene.componentIDs[componentType] = id
-		scene.componentPools = append(scene.componentPools, &pool[T]{make([]T, 0, 1), make(map[uint32]uint32)})
+		scene.componentPools = append(scene.componentPools, &pool[T]{nil, make(map[uint32]uint32)}) //make([]Component[T], 0, 1)
 		scene.currentComponentID++
 	}
 	return id

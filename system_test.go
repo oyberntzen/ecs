@@ -18,7 +18,7 @@ import (
 	"testing"
 
 	"github.com/oyberntzen/ecs"
-	"github.com/stretchr/testify/assert"
+	"github.com/smyrman/subx"
 )
 
 type system1 struct {
@@ -51,7 +51,7 @@ func TestSystemUpdate(t *testing.T) {
 	scene.AddSystem(sys)
 	scene.Update(0)
 
-	assert.Equal(t, true, sys.updated, "System should be updated")
+	t.Run("Expected correct result", subx.Test(subx.Value(sys.updated), subx.CompareEqual(true)))
 }
 
 func TestSystemInit(t *testing.T) {
@@ -63,7 +63,8 @@ func TestSystemInit(t *testing.T) {
 	scene.AddSystem(sys2)
 	scene.Init()
 
-	assert.Equal(t, true, sys2.inited, "System should be inited")
+	t.Run("Expected correct result", subx.Test(subx.Value(sys2.inited), subx.CompareEqual(true)))
+
 }
 
 func TestSystemDelete(t *testing.T) {
@@ -75,68 +76,6 @@ func TestSystemDelete(t *testing.T) {
 	scene.AddSystem(sys2)
 	scene.Delete()
 
-	assert.Equal(t, true, sys2.deleted, "System should be deleted")
-}
+	t.Run("Expected correct result", subx.Test(subx.Value(sys2.deleted), subx.CompareEqual(true)))
 
-type system3 struct {
-	ecs.System
-	allComponents []comp1
-}
-
-type comp1 struct {
-	ecs.Component
-	num int
-}
-
-func (sys *system3) Update(dt float64) {
-	sys.allComponents = ecs.AllComponents[comp1](sys.Scene())
-}
-
-func TestSystemAllComponents(t *testing.T) {
-	scene := ecs.Scene{}
-	sys := &system3{}
-	scene.AddSystem(sys)
-
-	entities := make([]ecs.Entity, 100)
-	for i := 0; i < len(entities); i++ {
-		entities[i] = scene.NewEntity()
-		ecs.AddComponent(&comp1{Component: ecs.NewComponent(entities[i]), num: i})
-	}
-
-	scene.Update(0)
-
-	for i := 0; i < len(entities); i++ {
-		comp := sys.allComponents[i]
-		assert.Equal(t, i, comp.num, "Components should be equal")
-	}
-}
-
-type system4 struct {
-	ecs.System
-}
-
-func (sys *system4) Update(dt float64) {
-	allComponents := ecs.AllComponents[comp1](sys.Scene())
-	for i := 0; i < len(allComponents); i++ {
-		allComponents[i].num++
-	}
-}
-
-func BenchmarkSystemAllComponents(b *testing.B) {
-	scene := ecs.Scene{}
-	sys := &system4{}
-	scene.AddSystem(sys)
-
-	entities := make([]ecs.Entity, 100)
-	for i := 0; i < len(entities); i++ {
-		entities[i] = scene.NewEntity()
-		ecs.AddComponent(&comp1{Component: ecs.NewComponent(entities[i]), num: i})
-	}
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		for n := 0; n < 100; n++ {
-			scene.Update(0)
-		}
-	}
 }

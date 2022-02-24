@@ -20,8 +20,8 @@ const (
 	decreaseThreshold = 3
 )
 
-type pool[T ComponentInterface] struct {
-	components []T
+type pool[T any] struct {
+	components []Component[T]
 	indicies   map[uint32]uint32
 }
 
@@ -29,27 +29,27 @@ type poolInterface interface {
 	remove(entity *Entity) bool
 }
 
-func (p *pool[T]) add(entity *Entity, component *T) {
+func (p *pool[T]) add(entity *Entity, data *T) {
 	if index, ok := p.indicies[entity.id]; ok {
-		p.components[index] = *component
+		p.components[index] = Component[T]{entity, *data}
 	}
 
 	length := len(p.components)
 	if cap(p.components)-length == 0 {
 		if length == 0 {
-			p.components = []T{*component}
+			p.components = []Component[T]{{entity, *data}}
 			p.indicies[entity.id] = 0
 			return
 		}
-		newItems := make([]T, length+1, length*increaseFactor)
+		newItems := make([]Component[T], length+1, length*increaseFactor)
 		copy(newItems, p.components)
 		p.components = newItems
-		p.components[length] = *component
+		p.components[length] = Component[T]{entity, *data}
 		p.indicies[entity.id] = uint32(length)
 		return
 	}
 	p.components = p.components[:length+1]
-	p.components[length] = *component
+	p.components[length] = Component[T]{entity, *data}
 	p.indicies[entity.id] = uint32(length)
 }
 
@@ -58,7 +58,7 @@ func (p *pool[T]) get(entity *Entity) *T {
 	if !ok {
 		return nil
 	}
-	return &p.components[index]
+	return p.components[index].Component()
 }
 
 func (p *pool[T]) remove(entity *Entity) bool {
@@ -78,7 +78,7 @@ func (p *pool[T]) remove(entity *Entity) bool {
 	}
 
 	if length*decreaseThreshold < cap(p.components) {
-		newItems := make([]T, length, length*decreaseFactor)
+		newItems := make([]Component[T], length, length*decreaseFactor)
 		copy(newItems, p.components)
 		p.components = newItems
 	}
